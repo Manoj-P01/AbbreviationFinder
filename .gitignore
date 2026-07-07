@@ -1,0 +1,16 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build and distribution directories
+build/
+dist/
+backup-build/
+backup-dist/
+backup1-build/
+backup1-dist/
+
+# VS Code settings
+.vscode/

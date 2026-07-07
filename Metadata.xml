@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<item-info>
+  <dates>
+    <specialIssue styVal="false" />
+    <received-date styVal="">10/02/2024</received-date>
+    <revised-date styVal="" />
+    <accept-date styVal="" />
+    <expiry-date styVal="">01/01/1900</expiry-date>
+    <published-date styVal="">2024</published-date>
+    <accepted-publication-date styVal="" />
+    <aap-date>01/01/1900</aap-date>
+    <specificHistory styVal="" />
+    <historyItemGroup styVal="" />
+    <miscellaneous />
+    <mps-received-date styVal="">10/02/2024</mps-received-date>
+    <effect-cover-date />
+    <cover-date>01/01/1900</cover-date>
+    <oa-request-date styVal="" />
+    <AOP-date />
+  </dates>
+  <copyrights>
+    <copyright-recd-date>2024</copyright-recd-date>
+    <copyright-status />
+    <copyright-string lang="" />
+    <copyright-name />
+    <article-copyright />
+    <copyright-line />
+    <CopyrightCode />
+  </copyrights>
+  <is-n>
+    <print-isbn />
+    <online-isbn />
+    <print-issn>2373-9878</print-issn>
+    <online-issn>2373-9878</online-issn>
+  </is-n>
+  <publisher>
+    <publisher-id>ACS</publisher-id>
+    <publisher-name>American Chemical Society</publisher-name>
+    <publisher-location />
+  </publisher>
+  <titles>
+    <journal-title>ACS Biomaterials Science &amp; Engineering</journal-title>
+    <abrev-journal-title />
+    <pubmedabbrev />
+  </titles>
+  <manifest>
+    <article-title />
+    <version />
+    <article-ids-other-versions />
+    <level />
+    <subject />
+    <headword />
+    <authorname />
+    <keywords />
+  </manifest>
+  <ids>
+    <cid>ACS</cid>
+    <project-type>ACS</project-type>
+    <jid>ed</jid>
+    <aid>ed4c01532-test1-Abbr</aid>
+    <pii />
+    <doi />
+    <docsubtype>research-article</docsubtype>
+    <refers-to-document />
+    <pmi />
+    <jid-abr>nl</jid-abr>
+    <ms-number />
+    <uid />
+    <art-number />
+    <cross-mark />
+  </ids>
+  <subitems />
+  <author-group>
+    <first-author>
+      <fnm />
+      <aff>
+        <organization />
+        <institute />
+        <address />
+        <zipcode />
+        <cty />
+        <cny />
+        <fax />
+      </aff>
+      <snm />
+      <degree />
+    </first-author>
+    <corr-author>
+      <fnm />
+      <aff>
+        <organization />
+        <institute />
+        <address />
+        <zipcode />
+        <cty />
+        <cny />
+        <fax />
+      </aff>
+      <snm />
+      <degree />
+    </corr-author>
+    <aff>
+      <organization />
+      <institute />
+      <address />
+      <zipcode />
+      <cty />
+      <cny />
+      <fax />
+      <ead />
+    </aff>
+  </author-group>
+  <keywords styVal="" Max="" Min="" Source="">
+    <class />
+    <keyword />
+  </keywords>
+  <others>
+    <article-type />
+    <dochead />
+    <aopbiblio />
+    <pdf-source />
+    <subsubject />
+    <permission />
+    <coden />
+    <edition />
+    <volume>0</volume>
+    <issue>0</issue>
+    <stage>PreeditStructuring</stage>
+    <chp-count>0</chp-count>
+    <page-first />
+    <page-last />
+  </others>
+  <lang>English(en)</lang>
+  <doctopic />
+  <otherReceipt>
+    <p />
+  </otherReceipt>
+  <e-components />
+  <fulltable />
+  <Stubbedtable />
+  <ExtFigure />
+  <FigureSets />
+  <onlinematerialtype />
+  <scoap />
+  <fundrefinfo />
+  <remark-type />
+  <remark />
+  <si>No</si>
+  <supplementary-comments />
+  <subject-categories />
+  <Techniques />
+  <colour>no</colour>
+  <coi>no</coi>
+  <open-access />
+  <Projektdeal />
+  <Highlights>
+    <p />
+  </Highlights>
+  <JournalSpecificKeywordsComment>
+    <p />
+  </JournalSpecificKeywordsComment>
+  <JournalSpecificHistoryText>
+    <p />
+  </JournalSpecificHistoryText>
+  <JournalSpecificAbstractComment>
+    <p />
+  </JournalSpecificAbstractComment>
+  <JournalSpecificGraphicalAbstractComment>
+    <p />
+  </JournalSpecificGraphicalAbstractComment>
+  <editors />
+  <keywords>
+    <class />
+    <keyword />
+  </keywords>
+  <keywords>
+    <class />
+    <keyword />
+  </keywords>
+  <qc-name />
+  <journal-manager />
+  <pe-name />
+  <ce-name />
+  <le-name />
+  <pg-name />
+  <Acknowledgements />
+  <AcademicContent />
+  <PeerReviewedContent />
+  <AuthorBiographical />
+  <Abstract />
+  <wordcount />
+  <production-instructions>&lt;notesToVendor/&gt;</production-instructions>
+  <no-of-source-data-files />
+  <no-of-suppl-fig />
+  <linked-to-nandv />
+  <nandv-to-linked />
+  <fig-integrity-checkDetails />
+  <aop />
+  <cme />
+  <subject-code />
+  <rightslink />
+  <Taxonomy />
+  <workFlow />
+</item-info>

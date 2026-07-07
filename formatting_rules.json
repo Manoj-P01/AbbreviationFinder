@@ -1,0 +1,67 @@
+{
+    "double_spaces": {
+        "pattern": "  +",
+        "message": "Double Spaces",
+        "target": "both"
+    },
+    "serial_commas": {
+        "pattern": "\\b[^,.]+,\\s+[^,.]+,\\s+(?:and|or)\\s+[^,.]+\\b",
+        "message": "Serial Commas",
+        "target": "body"
+    },
+    "section_words": {
+        "pattern": "\\b(Section|[Pp]art|Chapter|Epilogue|Preface|Acknowledgement)s?\\b",
+        "message": "Prohibited section terms",
+        "target": "both"
+    },
+    "space_period_para": {
+        "pattern": "\\. +$",
+        "message": "Space between period and paragraph mark",
+        "target": "body"
+    },
+    "double_punctuation": {
+        "pattern": ",{2,}|::+|;;+|(?<!\\.)\\.\\.(?!\\.)",
+        "message": "Double punctuation detected",
+        "target": "both"
+    },
+    "space_before_endnote": {
+        "pattern": " +\\[\\[\\^e\\]\\]",
+        "message": "Space before endnote citation",
+        "target": "body"
+    },
+    "no_space_endnote_text": {
+        "pattern": "\\[\\[\\^e\\]\\][a-zA-Z]",
+        "message": "No space between endnote and text",
+        "target": "body"
+    },
+    "endnote_colon": {
+        "pattern": "\\[\\[\\^e\\]\\]:",
+        "message": "Endnote citation followed by colon",
+        "target": "body"
+    },
+    "endnote_semicolon": {
+        "pattern": "\\[\\[\\^e\\]\\];",
+        "message": "Endnote citation followed by semicolon",
+        "target": "body"
+    },
+    "endnote_comma": {
+        "pattern": "\\[\\[\\^e\\]\\],",
+        "message": "Endnote citation followed by comma",
+        "target": "body"
+    },
+    "comma_after_quotes_in_endnotes": {
+        "pattern": "[\"”],",
+        "message": "Comma placed outside of double quotes in endnotes",
+        "target": "endnotes"
+    },
+    "hyphen_spaced": {
+        "pattern": " - ",
+        "message": "Hyphen surrounded by spaces",
+        "target": "both"
+    },
+    "spaced_endash": {
+        "pattern": "\\s+\\u2013\\s+|\\s+\\u2014\\s+|--",
+        "message": "Double hyphen or spaced en-dash/em-dash used",
+        "target": "both"
+    }
+}
