@@ -14,3 +14,8 @@ backup1-dist/
 
 # VS Code settings
 .vscode/
+
+# Output reports & temporary test files
+*_report*
+Sample.docx
+both.docx

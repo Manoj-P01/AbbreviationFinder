@@ -10,7 +10,7 @@
         "target": "body"
     },
     "section_words": {
-        "pattern": "\\b(Section|[Pp]art|Chapter|Epilogue|Preface|Acknowledgement)s?\\b",
+        "pattern": "\\b([Ss]ection|[Pp]ART|Chapter|Epilogue|Preface|Acknowledgement|[Aa][Nn][Nn][Ee][Xx][Uu][Rr][Ee]|Appendix|The elderly|Schizophrenics|Schedule)s?\\b",
         "message": "Prohibited section terms",
         "target": "both"
     },
@@ -50,7 +50,7 @@
         "target": "body"
     },
     "comma_after_quotes_in_endnotes": {
-        "pattern": "[\"”],",
+        "pattern": "[\"\u201d],",
         "message": "Comma placed outside of double quotes in endnotes",
         "target": "endnotes"
     },
@@ -63,5 +63,15 @@
         "pattern": "\\s+\\u2013\\s+|\\s+\\u2014\\s+|--",
         "message": "Double hyphen or spaced en-dash/em-dash used",
         "target": "both"
+    },
+    "colon_before_endnote": {
+        "pattern": ":\\[\\[\\^e\\]\\]",
+        "message": "Colon before endnote citation detected",
+        "target": "body"
+    },
+    "semicolon_before_endnote": {
+        "pattern": ";\\[\\[\\^e\\]\\]",
+        "message": "Semicolon before endnote citation detected",
+        "target": "body"
     }
 }

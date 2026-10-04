@@ -75,8 +75,32 @@ def extract_abbreviation_list(document_content: str) -> Dict[str, Any]:
         abbreviation_count = []
         all_found_abbreviations = set()
 
+        # Find words inside angular brackets to exclude them completely
+        excluded_bracket_words = set()
+        for bracket_content in re.findall(r'<([a-zA-Z0-9_\s.-]{1,100})>', document_content):
+            # 1. Add raw content
+            excluded_bracket_words.add(bracket_content.strip().upper())
+            excluded_bracket_words.add(bracket_content.strip().lower())
+            excluded_bracket_words.add(bracket_content.strip())
+            
+            # 2. Add cleaned content (alphanumeric only)
+            cleaned = re.sub(r"[^-a-zA-Z0-9 ]", "", bracket_content).strip()
+            excluded_bracket_words.add(cleaned.upper())
+            excluded_bracket_words.add(cleaned.lower())
+            excluded_bracket_words.add(cleaned)
+            
+            # 3. Add individual words
+            for w in re.split(r'[^a-zA-Z0-9-]+', bracket_content):
+                if w:
+                    excluded_bracket_words.add(w.upper())
+                    excluded_bracket_words.add(w.lower())
+                    excluded_bracket_words.add(w)
+
+        # Remove angular brackets content for searching/counting
+        clean_content = re.sub(r'<[a-zA-Z0-9_\s.-]{1,100}>', ' ', document_content)
+
         pattern = r"(([A-Z]+ [0-9]+)|\b([A-Z]+(-?[A-Z0-9]+)*(s)?)\b)|([a-z]*[A-Z][a-z]*)+"
-        matches = re.findall(pattern, document_content)
+        matches = re.findall(pattern, clean_content)
 
         for match_group in matches:
             found_abbreviation = next((m for m in match_group if m), "").strip()
@@ -88,16 +112,19 @@ def extract_abbreviation_list(document_content: str) -> Dict[str, Any]:
 
             if (2 <= len(found_abbreviation) <= 6 and
                     len(re.findall(r"[A-Z]", found_abbreviation)) > 1 and
-                    found_abbreviation not in all_found_abbreviations):
+                    found_abbreviation not in all_found_abbreviations and
+                    found_abbreviation not in excluded_bracket_words and
+                    found_abbreviation.upper() not in excluded_bracket_words and
+                    found_abbreviation.lower() not in excluded_bracket_words):
 
                 count_pattern = rf"\b{re.escape(found_abbreviation)}s?\b"
-                count = len(re.findall(count_pattern, document_content))
+                count = len(re.findall(count_pattern, clean_content))
 
                 abbreviation_list.append(found_abbreviation)
                 abbreviation_count.append(count)
                 all_found_abbreviations.add(found_abbreviation)
 
-        expansion_array = resolve_search_priority(abbreviation_list, document_content)
+        expansion_array = resolve_search_priority(abbreviation_list, clean_content)
 
         result = []
         for idx, abbr in enumerate(abbreviation_list):
@@ -344,15 +371,31 @@ def clean_surrounding_nonword(text):
 def reconstruct_paragraph_text(para) -> str:
     """Reconstruct paragraph text replacing endnote/footnote elements with markers."""
     parts = []
-    for run in para.runs:
-        run_xml = run._r.xml
-        if 'footnoteReference' in run_xml:
-            parts.append("[[^f]]")
-        elif 'endnoteReference' in run_xml:
-            parts.append("[[^e]]")
+    ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+    
+    def traverse(node):
+        # Skip deleted text
+        if node.tag.endswith('del'):
+            return
+            
+        if node.tag.endswith('r'):
+            # Check for footnote/endnote references
+            if node.find('.//w:footnoteReference', ns) is not None:
+                parts.append("[[^f]]")
+            elif node.find('.//w:endnoteReference', ns) is not None:
+                parts.append("[[^e]]")
+            else:
+                # Extract text from w:t elements
+                for t in node.findall('.//w:t', ns):
+                    if t.text:
+                        parts.append(t.text)
         else:
-            parts.append(run.text)
+            for child in node:
+                traverse(child)
+                
+    traverse(para._p)
     return "".join(parts)
+
 
 def extract_footnotes_and_endnotes(docx_path: str) -> List[Dict[str, str]]:
     """Extract footnote and endnote text content from raw XML parts."""
@@ -1295,9 +1338,41 @@ def main():
     combined_parser.add_argument('--us_dict', default='us_dict.txt', help='Path to US dictionary')
     combined_parser.add_argument('--uk_dict', default='uk_dict.txt', help='Path to UK dictionary')
 
-    
+    # Open Section Words Form command
+    subparsers.add_parser('open-form', help='Open Section Words Management form in default web browser')
+
     args = parser.parse_args()
-   
+
+    if args.command == 'open-form':
+        if getattr(sys, 'frozen', False):
+            # Check MEIPASS (bundled inside exe) or next to executable
+            meipass_dir = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
+            exe_dir = os.path.dirname(sys.executable)
+            
+            form_path = os.path.join(exe_dir, 'section_words_form.html')
+            meipass_form = os.path.join(meipass_dir, 'section_words_form.html')
+            
+            if os.path.exists(meipass_form):
+                try:
+                    import shutil
+                    shutil.copy2(meipass_form, form_path)
+                    print(f"Extracted section_words_form.html to: {form_path}")
+                except Exception:
+                    form_path = meipass_form
+            elif not os.path.exists(form_path):
+                form_path = meipass_form
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            form_path = os.path.join(base_dir, 'section_words_form.html')
+            
+        if os.path.exists(form_path):
+            import webbrowser
+            webbrowser.open(f"file:///{os.path.abspath(form_path)}")
+            print(f"Opened Section Words Form in default web browser: {form_path}")
+        else:
+            print(f"Error: section_words_form.html not found.")
+        return
+
     try:
         # Common validations
         if not os.path.exists(args.input):

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.background import BackgroundTasks
+from pydantic import BaseModel
 from typing import Dict, List, Tuple, Any
 import docx2txt
 from docx import Document
@@ -332,8 +333,32 @@ async def extract_abbreviation_list(document_content):
         abbreviation_count = []
         all_found_abbreviations = set()
 
+        # Find words inside angular brackets to exclude them completely
+        excluded_bracket_words = set()
+        for bracket_content in re.findall(r'<([a-zA-Z0-9_\s.-]{1,100})>', document_content):
+            # 1. Add raw content
+            excluded_bracket_words.add(bracket_content.strip().upper())
+            excluded_bracket_words.add(bracket_content.strip().lower())
+            excluded_bracket_words.add(bracket_content.strip())
+            
+            # 2. Add cleaned content (alphanumeric only)
+            cleaned = re.sub(r"[^-a-zA-Z0-9 ]", "", bracket_content).strip()
+            excluded_bracket_words.add(cleaned.upper())
+            excluded_bracket_words.add(cleaned.lower())
+            excluded_bracket_words.add(cleaned)
+            
+            # 3. Add individual words
+            for w in re.split(r'[^a-zA-Z0-9-]+', bracket_content):
+                if w:
+                    excluded_bracket_words.add(w.upper())
+                    excluded_bracket_words.add(w.lower())
+                    excluded_bracket_words.add(w)
+
+        # Remove angular brackets content for searching/counting
+        clean_content = re.sub(r'<[a-zA-Z0-9_\s.-]{1,100}>', ' ', document_content)
+
         pattern = r"(([A-Z]+ [0-9]+)|\b([A-Z]+(-?[A-Z0-9]+)*(s)?)\b)|([a-z]*[A-Z][a-z]*)+"
-        matches = re.findall(pattern, document_content)
+        matches = re.findall(pattern, clean_content)
 
         for match_group in matches:
             found_abbreviation = next((m for m in match_group if m), "").strip()
@@ -345,16 +370,19 @@ async def extract_abbreviation_list(document_content):
 
             if (2 <= len(found_abbreviation) <= 6 and
                     len(re.findall(r"[A-Z]", found_abbreviation)) > 1 and
-                    found_abbreviation not in all_found_abbreviations):
+                    found_abbreviation not in all_found_abbreviations and
+                    found_abbreviation not in excluded_bracket_words and
+                    found_abbreviation.upper() not in excluded_bracket_words and
+                    found_abbreviation.lower() not in excluded_bracket_words):
 
                 count_pattern = rf"\b{re.escape(found_abbreviation)}s?\b"
-                count = len(re.findall(count_pattern, document_content))
+                count = len(re.findall(count_pattern, clean_content))
 
                 abbreviation_list.append(found_abbreviation)
                 abbreviation_count.append(count)
                 all_found_abbreviations.add(found_abbreviation)
 
-        expansion_array = resolve_search_priority(abbreviation_list, document_content)
+        expansion_array = resolve_search_priority(abbreviation_list, clean_content)
 
         # Assemble the desired response format
         result = []
@@ -840,6 +868,240 @@ def save_analysis_as_html(combined_results, output_file):
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html)
     print(f"HTML report saved as '{output_file}'")
+
+from typing import Dict, List, Tuple, Any, Union
+
+class WordRuleItem(BaseModel):
+    word: str
+    case_mode: str = "first"  # "first", "exact", "all"
+
+class SectionWordsRequest(BaseModel):
+    words: List[Union[str, Dict[str, Any], WordRuleItem]]
+    default_case_mode: str = "first"
+    match_first_letter_case: bool = True
+
+def get_formatting_rules_path() -> str:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_dir, 'formatting_rules.json')
+
+def load_formatting_rules_data() -> dict:
+    rules_path = get_formatting_rules_path()
+    if os.path.exists(rules_path):
+        try:
+            with open(rules_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error reading formatting_rules.json: {e}")
+    return {
+        "section_words": {
+            "pattern": "\\b([Ss]ection|[Pp]art|[Cc]hapter|[Ee]pilogue|[Pp]reface|[Aa]cknowledgement)s?\\b",
+            "message": "Prohibited section terms",
+            "target": "both"
+        }
+    }
+
+def save_formatting_rules_data(rules_data: dict) -> None:
+    rules_path = get_formatting_rules_path()
+    with open(rules_path, 'w', encoding='utf-8') as f:
+        json.dump(rules_data, f, indent=4)
+
+def parse_section_words_detailed(pattern: str) -> List[Dict[str, str]]:
+    match = re.search(r'\((.*?)\)', pattern)
+    if not match:
+        return [
+            {"word": "Section", "case_mode": "first"},
+            {"word": "Part", "case_mode": "first"},
+            {"word": "Chapter", "case_mode": "first"},
+            {"word": "Epilogue", "case_mode": "first"},
+            {"word": "Preface", "case_mode": "first"},
+            {"word": "Acknowledgement", "case_mode": "first"},
+        ]
+    raw_terms = match.group(1).split('|')
+    items = []
+    seen = set()
+    for term in raw_terms:
+        all_brackets = re.findall(r'\[([a-zA-Z])[a-zA-Z]\]', term)
+        non_brackets_alpha = re.sub(r'[^a-zA-Z]', '', re.sub(r'\[[a-zA-Z]{2}\]', '', term))
+        
+        if len(all_brackets) > 0 and len(non_brackets_alpha) == 0:
+            clean_word = re.sub(r'\[([a-zA-Z])[a-zA-Z]\]', r'\1', term)
+            case_mode = "all"
+        elif len(all_brackets) > 0:
+            clean_word = re.sub(r'\[([a-zA-Z])[a-zA-Z]\]', r'\1', term)
+            case_mode = "first"
+        else:
+            clean_word = term
+            case_mode = "exact"
+            
+        if clean_word and clean_word.lower() not in seen:
+            seen.add(clean_word.lower())
+            items.append({"word": clean_word, "case_mode": case_mode})
+            
+    return items
+
+def format_word_by_case_mode(word: str, case_mode: str = "first") -> str:
+    word = word.strip()
+    if not word:
+        return ""
+    if case_mode == "first":
+        words = word.split()
+        out_words = []
+        for w in words:
+            if w and w[0].isalpha():
+                u, l = w[0].upper(), w[0].lower()
+                out_words.append(f"[{u}{l}]{w[1:]}" if u != l else w)
+            else:
+                out_words.append(w)
+        return " ".join(out_words)
+    elif case_mode == "all":
+        out = []
+        for ch in word:
+            if ch.isalpha():
+                u, l = ch.upper(), ch.lower()
+                out.append(f"[{u}{l}]" if u != l else ch)
+            else:
+                out.append(re.escape(ch))
+        return "".join(out)
+    else:  # exact
+        return word
+
+def build_section_words_pattern_detailed(items: List[Dict[str, str]]) -> str:
+    seen = set()
+    formatted = []
+    for item in items:
+        w_clean = item["word"].strip()
+        mode = item.get("case_mode", "first")
+        if w_clean and w_clean.lower() not in seen:
+            seen.add(w_clean.lower())
+            formatted.append(format_word_by_case_mode(w_clean, mode))
+    return r"\b(" + "|".join(formatted) + r")s?\b"
+
+def parse_section_words(pattern: str) -> Tuple[List[str], bool]:
+    items = parse_section_words_detailed(pattern)
+    words = [it["word"] for it in items]
+    has_bracket_case = any(it["case_mode"] in ("first", "all") for it in items)
+    return words, has_bracket_case
+
+@app.get("/rules/section-words")
+def get_section_words():
+    rules = load_formatting_rules_data()
+    section_rule = rules.get("section_words", {})
+    pattern = section_rule.get("pattern", "")
+    items = parse_section_words_detailed(pattern)
+    words = [it["word"] for it in items]
+    return {
+        "words": words,
+        "items": items,
+        "pattern": pattern,
+        "rule": section_rule
+    }
+
+@app.post("/rules/section-words")
+def add_section_words(req: SectionWordsRequest):
+    rules = load_formatting_rules_data()
+    if "section_words" not in rules:
+        rules["section_words"] = {
+            "pattern": "\\b([Ss]ection|[Pp]art|[Cc]hapter|[Ee]pilogue|[Pp]reface|[Aa]cknowledgement)s?\\b",
+            "message": "Prohibited section terms",
+            "target": "both"
+        }
+    current_pattern = rules["section_words"].get("pattern", "")
+    existing_items = parse_section_words_detailed(current_pattern)
+    existing_dict = {it["word"].lower(): it for it in existing_items}
+    
+    default_mode = req.default_case_mode if req.default_case_mode in ("first", "exact", "all") else ("first" if req.match_first_letter_case else "exact")
+
+    for raw in req.words:
+        if isinstance(raw, dict):
+            w_str = str(raw.get("word", "")).strip()
+            c_mode = raw.get("case_mode", default_mode)
+        elif hasattr(raw, "word"):
+            w_str = str(raw.word).strip()
+            c_mode = getattr(raw, "case_mode", default_mode)
+        else:
+            w_str = str(raw).strip()
+            c_mode = default_mode
+            
+        split_items = [item.strip() for item in w_str.split(',') if item.strip()]
+        for w in split_items:
+            key = w.lower()
+            if key not in existing_dict:
+                item = {"word": w, "case_mode": c_mode}
+                existing_items.append(item)
+                existing_dict[key] = item
+            else:
+                existing_dict[key]["word"] = w
+                existing_dict[key]["case_mode"] = c_mode
+
+    new_pattern = build_section_words_pattern_detailed(existing_items)
+    rules["section_words"]["pattern"] = new_pattern
+    save_formatting_rules_data(rules)
+    
+    return {
+        "status": "success",
+        "items": existing_items,
+        "words": [it["word"] for it in existing_items],
+        "pattern": new_pattern
+    }
+
+@app.put("/rules/section-words/mode")
+def update_section_word_mode(word: str, case_mode: str):
+    if case_mode not in ("first", "exact", "all"):
+        raise HTTPException(status_code=400, detail="Invalid case_mode. Must be 'first', 'exact', or 'all'.")
+    rules = load_formatting_rules_data()
+    if "section_words" in rules:
+        current_pattern = rules["section_words"].get("pattern", "")
+        existing_items = parse_section_words_detailed(current_pattern)
+        found = False
+        for it in existing_items:
+            if it["word"].lower() == word.lower():
+                it["case_mode"] = case_mode
+                found = True
+                break
+        if not found:
+            existing_items.append({"word": word, "case_mode": case_mode})
+            
+        new_pattern = build_section_words_pattern_detailed(existing_items)
+        rules["section_words"]["pattern"] = new_pattern
+        save_formatting_rules_data(rules)
+        return {
+            "status": "success",
+            "updated_word": word,
+            "new_mode": case_mode,
+            "items": existing_items,
+            "words": [it["word"] for it in existing_items],
+            "pattern": new_pattern
+        }
+    raise HTTPException(status_code=404, detail="section_words rule not found")
+
+@app.delete("/rules/section-words/{word}")
+def delete_section_word(word: str):
+    rules = load_formatting_rules_data()
+    if "section_words" in rules:
+        current_pattern = rules["section_words"].get("pattern", "")
+        existing_items = parse_section_words_detailed(current_pattern)
+        filtered_items = [it for it in existing_items if it["word"].lower() != word.lower()]
+        
+        new_pattern = build_section_words_pattern_detailed(filtered_items)
+        rules["section_words"]["pattern"] = new_pattern
+        save_formatting_rules_data(rules)
+        return {
+            "status": "success",
+            "removed_word": word,
+            "items": filtered_items,
+            "words": [it["word"] for it in filtered_items],
+            "pattern": new_pattern
+        }
+    raise HTTPException(status_code=404, detail="section_words rule not found")
+
+@app.get("/section-words-form", response_class=HTMLResponse)
+def get_section_words_form():
+    form_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'section_words_form.html')
+    if os.path.exists(form_path):
+        with open(form_path, 'r', encoding='utf-8') as f:
+            return HTMLResponse(content=f.read())
+    raise HTTPException(status_code=404, detail="section_words_form.html file not found")
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}

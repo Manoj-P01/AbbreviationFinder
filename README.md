@@ -48,6 +48,12 @@ python document_analyzer_cli.py abbreviations -i input.docx -o abbreviation_repo
 python document_analyzer_cli.py formatting -i input.docx -o formatting_report.json
 ```
 
+#### E. Manage Section Words Form
+Open the interactive form to view, add (single or comma-separated), and delete prohibited section terms:
+```bash
+python document_analyzer_cli.py open-form
+```
+
 ---
 
 ### 2. Document Analyzer Web API (`UK_US_Word_Analyzer_API.py`)

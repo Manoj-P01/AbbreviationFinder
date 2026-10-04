@@ -5,7 +5,7 @@ a = Analysis(
     ['document_analyzer_cli.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('section_words_form.html', '.'), ('formatting_rules.json', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -36,3 +36,15 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
+import shutil
+import os
+spec_dir = os.path.dirname(os.path.abspath(SPEC))
+dist_dir = os.path.join(spec_dir, 'dist')
+if os.path.exists(dist_dir):
+    for filename in ['section_words_form.html', 'formatting_rules.json', 'uk_dict.txt', 'us_dict.txt']:
+        src = os.path.join(spec_dir, filename)
+        if os.path.exists(src):
+            shutil.copy2(src, os.path.join(dist_dir, filename))
+            print(f"Copied {filename} to {dist_dir}")
+

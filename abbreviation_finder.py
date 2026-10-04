@@ -85,15 +85,46 @@ class AbbreviationFinder:
                 # Skip headings and author initials
                 if self._is_author_initial(text) or text.strip().lower() in self.excluded_headings:
                     continue
+
+                # Find words inside angular brackets to exclude them completely
+                excluded_bracket_words = set()
+                for bracket_content in re.findall(r'<([a-zA-Z0-9_\s.-]{1,100})>', text):
+                    # 1. Add raw content
+                    excluded_bracket_words.add(bracket_content.strip().upper())
+                    excluded_bracket_words.add(bracket_content.strip().lower())
+                    excluded_bracket_words.add(bracket_content.strip())
+                    
+                    # 2. Add cleaned content (alphanumeric only)
+                    cleaned = re.sub(r"[^-a-zA-Z0-9 ]", "", bracket_content).strip()
+                    excluded_bracket_words.add(cleaned.upper())
+                    excluded_bracket_words.add(cleaned.lower())
+                    excluded_bracket_words.add(cleaned)
+                    
+                    # 3. Add individual words
+                    for w in re.split(r'[^a-zA-Z0-9-]+', bracket_content):
+                        if w:
+                            excluded_bracket_words.add(w.upper())
+                            excluded_bracket_words.add(w.lower())
+                            excluded_bracket_words.add(w)
+
+                # Clean text of angular brackets
+                clean_text = re.sub(r'<[a-zA-Z0-9_\s.-]{1,100}>', ' ', text)
+
                 # Look for explicit pairs
                 for pattern in self.abbr_patterns[:2]:
-                    matches = re.finditer(pattern, text)
+                    matches = re.finditer(pattern, clean_text)
                     for match in matches:
                         if len(match.groups()) == 2:
                             if pattern.startswith('\\b([A-Za-z'):
                                 full_form, abbr = match.groups()
                             else:
                                 abbr, full_form = match.groups()
+
+                            if (abbr in excluded_bracket_words or
+                                abbr.upper() in excluded_bracket_words or
+                                abbr.lower() in excluded_bracket_words):
+                                continue
+
                             abbr_key = abbr.upper()
                             if abbr_key not in abbr_to_full:
                                 abbr_to_full[abbr_key] = full_form.strip()
@@ -221,9 +252,33 @@ class AbbreviationFinder:
         if text.strip().lower() in self.excluded_headings:
             return
 
+        # Find words inside angular brackets to exclude them completely
+        excluded_bracket_words = set()
+        for bracket_content in re.findall(r'<([a-zA-Z0-9_\s.-]{1,100})>', text):
+            # 1. Add raw content
+            excluded_bracket_words.add(bracket_content.strip().upper())
+            excluded_bracket_words.add(bracket_content.strip().lower())
+            excluded_bracket_words.add(bracket_content.strip())
+            
+            # 2. Add cleaned content (alphanumeric only)
+            cleaned = re.sub(r"[^-a-zA-Z0-9 ]", "", bracket_content).strip()
+            excluded_bracket_words.add(cleaned.upper())
+            excluded_bracket_words.add(cleaned.lower())
+            excluded_bracket_words.add(cleaned)
+            
+            # 3. Add individual words
+            for w in re.split(r'[^a-zA-Z0-9-]+', bracket_content):
+                if w:
+                    excluded_bracket_words.add(w.upper())
+                    excluded_bracket_words.add(w.lower())
+                    excluded_bracket_words.add(w)
+
+        # Clean text of angular brackets
+        clean_text = re.sub(r'<[a-zA-Z0-9_\s.-]{1,100}>', ' ', text)
+
         # Process each abbreviation pattern
         for pattern_index, pattern in enumerate(self.abbr_patterns):
-            matches = re.finditer(pattern, text)
+            matches = re.finditer(pattern, clean_text)
             for match in matches:
                 if len(match.groups()) == 2:
                     # Handle different pattern formats
@@ -240,10 +295,13 @@ class AbbreviationFinder:
                     else:  # ABBR: Definition format
                         abbr, full_form = match.groups()
 
-                    # Skip common headings and author initials
+                    # Skip common headings, author initials, and bracketed words
                     if (abbr.lower() in self.excluded_headings or 
                         (full_form and full_form.lower() in self.excluded_headings) or
-                        self._is_author_initial(abbr)):
+                        self._is_author_initial(abbr) or
+                        abbr in excluded_bracket_words or
+                        abbr.upper() in excluded_bracket_words or
+                        abbr.lower() in excluded_bracket_words):
                         continue
 
                     # Normalize abbreviation key

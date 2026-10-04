@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section Words Rule Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #8b5cf6;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --badge-bg: rgba(99, 102, 241, 0.2);
+            --badge-border: rgba(99, 102, 241, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a5b4fc 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .badge-count {
+            background: var(--badge-bg);
+            border: 1px solid var(--badge-border);
+            color: #c7d2fe;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .form-input {
+            flex: 1;
+            min-width: 280px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 0.85rem 1.1rem;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 0.85rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .words-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 1rem;
+            max-height: 240px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .word-tag {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .word-tag:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .mode-tag {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.55rem;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .mode-tag:hover {
+            transform: scale(1.05);
+        }
+
+        .mode-tag.first {
+            background: rgba(139, 92, 246, 0.25);
+            color: #c084fc;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+        }
+
+        .mode-tag.exact {
+            background: rgba(59, 130, 246, 0.25);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
+        .mode-tag.all {
+            background: rgba(16, 185, 129, 0.25);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .delete-btn {
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            line-height: 1;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .regex-preview {
+            font-family: monospace;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: #a5b4fc;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #1e293b;
+            border: 1px solid var(--success);
+            color: var(--text-main);
+            padding: 0.9rem 1.4rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .search-box {
+            margin-bottom: 1rem;
+        }
+
+        .empty-state {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-style: italic;
+            text-align: center;
+            padding: 1.5rem;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Section Words Rule Manager</h1>
+            <p>Add and manage prohibited section terms in <code>formatting_rules.json</code></p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+            <div class="card-title">Add Section Words</div>
+            <form id="addWordsForm" onsubmit="handleAddWords(event)">
+                <div class="input-group">
+                    <input type="text" id="wordsInput" class="form-input"
+                        placeholder="e.g. Annexure, Appendix, Schedule, Addendum" required />
+                    <button type="submit" class="btn">
+                        <span>+ Add Words</span>
+                    </button>
+                </div>
+                <div class="help-text">
+                    💡 You can enter single or multiple words separated by commas (,) in a single line.
+                </div>
+                <div
+                    style="margin-top: 0.9rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; color: #cbd5e1; font-size: 0.9rem;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <label for="defaultCaseMode">Case Matching Mode for New Words:</label>
+                        <select id="defaultCaseMode" class="form-input"
+                            style="padding: 0.45rem 0.8rem; min-width: 220px;" onchange="updateDefaultCaseMode()">
+                            <option value="first" selected>🔮 [Aa] First-Letter Caps/Small</option>
+                            <option value="exact">🎯 [A] Exact Case Only</option>
+                            <option value="all">🌐 [a-z] All Letters Case-Insensitive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="help-text" style="margin-top: 0.5rem; color: #a5b4fc;">
+                    💡 Tip: Click on any word badge below (e.g. <code>[Aa]</code>, <code>[A]</code>, <code>[a-z]</code>)
+                    to change its individual case matching rule!
+                </div>
+            </form>
+        </div>
+
+        <!-- Regex Pattern Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>Generated Regex Pattern</span>
+            </div>
+            <div class="regex-preview" id="regexPreview">\b(Section|Part|Chapter|Epilogue|Preface|Acknowledgement)s?\b
+            </div>
+        </div>
+
+        <!-- Active Section Words Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>Active Prohibited Terms</span>
+                <span class="badge-count" id="termsCount">0 Terms</span>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" class="form-input" placeholder="Search terms..."
+                    oninput="filterTerms()" style="width: 100%;" />
+            </div>
+
+            <div class="words-grid" id="wordsContainer">
+                <div class="empty-state">Loading section terms...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="toast" id="toast">Changes saved
+        <script>
+            let currentItems = [
+                { word: "Section", case_mode: "first" },
+                { word: "Part", case_mode: "first" },
+                { word: "Chapter", case_mode: "first" },
+                { word: "Epilogue", case_mode: "first" },
+                { word: "Preface", case_mode: "first" },
+                { word: "Acknowledgement", case_mode: "first" }
+            ];
+
+            let defaultCaseMode = "first";
+
+            const API_BASE = window.location.origin.includes('http') ? window.location.origin : 'http://localhost:8000';
+
+            async function fetchRules() {
+                try {
+                    const res = await fetch(`${API_BASE}/rules/section-words`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.items && Array.isArray(data.items)) {
+                            currentItems = data.items;
+                        } else if (data.words && Array.isArray(data.words)) {
+                            currentItems = data.words.map(w => ({ word: w, case_mode: "first" }));
+                        }
+                    }
+                } catch (err) {
+                    console.warn("API offline, using local fallback state:", err);
+                }
+                renderWords();
+            }
+
+            function updateDefaultCaseMode() {
+                defaultCaseMode = document.getElementById('defaultCaseMode').value;
+            }
+
+            function formatItemRegex(item) {
+                const word = item.word.trim();
+                if (!word) return "";
+                const mode = item.case_mode || "first";
+
+                if (mode === "first") {
+                    return word.split(/\s+/).map(w => {
+                        if (w && /[a-zA-Z]/.test(w[0])) {
+                            const u = w[0].toUpperCase();
+                            const l = w[0].toLowerCase();
+                            if (u !== l) return `[${u}${l}]${w.slice(1)}`;
+                        }
+                        return w;
+                    }).join(' ');
+                } else if (mode === "all") {
+                    let out = "";
+                    for (let i = 0; i < word.length; i++) {
+                        const ch = word[i];
+                        if (/[a-zA-Z]/.test(ch)) {
+                            const u = ch.toUpperCase();
+                            const l = ch.toLowerCase();
+                            out += (u !== l) ? `[${u}${l}]` : ch;
+                        } else {
+                            out += ch;
+                        }
+                    }
+                    return out;
+                } else {
+                    return word; // exact
+                }
+            }
+
+            function renderWords() {
+                const container = document.getElementById('wordsContainer');
+                const searchVal = document.getElementById('searchInput').value.toLowerCase();
+                container.innerHTML = '';
+
+                const filtered = currentItems.filter(it => it.word.toLowerCase().includes(searchVal));
+
+                document.getElementById('termsCount').textContent = `${currentItems.length} Term${currentItems.length === 1 ? '' : 's'}`;
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="empty-state">No section terms found.</div>`;
+                } else {
+                    filtered.forEach(item => {
+                        const tag = document.createElement('div');
+                        tag.className = 'word-tag';
+
+                        const modeClass = item.case_mode || "first";
+                        let modeLabel = "[Aa] First-Letter";
+                        if (modeClass === "exact") modeLabel = "[A] Exact Case";
+                        if (modeClass === "all") modeLabel = "[a-z] All Letters";
+
+                        tag.innerHTML = `
+                        <span>${escapeHtml(item.word)}</span>
+                        <span class="mode-tag ${modeClass}" onclick="cycleWordMode('${escapeHtml(item.word)}')" title="Click to change case rule for this word">
+                            ${modeLabel}
+                        </span>
+                        <span class="delete-btn" onclick="removeWord('${escapeHtml(item.word)}')">&times;</span>
+                    `;
+                        container.appendChild(tag);
+                    });
+                }
+
+                updateRegexPreview();
+            }
+
+            function filterTerms() {
+                renderWords();
+            }
+
+            function updateRegexPreview() {
+                const formatted = currentItems.map(it => formatItemRegex(it));
+                const pattern = `\\b(${formatted.join('|')})s?\\b`;
+                document.getElementById('regexPreview').textContent = pattern;
+            }
+
+            async function cycleWordMode(word) {
+                const item = currentItems.find(it => it.word.toLowerCase() === word.toLowerCase());
+                if (!item) return;
+
+                const modes = ["first", "exact", "all"];
+                const nextIdx = (modes.indexOf(item.case_mode || "first") + 1) % modes.length;
+                const newMode = modes[nextIdx];
+
+                item.case_mode = newMode;
+
+                try {
+                    const res = await fetch(`${API_BASE}/rules/section-words/mode?word=${encodeURIComponent(word)}&case_mode=${newMode}`, {
+                        method: 'PUT'
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.items) currentItems = data.items;
+                        showToast(`Updated "${word}" mode to ${newMode}`);
+                    } else {
+                        showToast(`Updated "${word}" mode locally to ${newMode}`);
+                    }
+                } catch (err) {
+                    showToast(`Updated "${word}" mode locally to ${newMode}`);
+                }
+
+                renderWords();
+            }
+
+            async function handleAddWords(e) {
+                e.preventDefault();
+                const input = document.getElementById('wordsInput');
+                const rawText = input.value.trim();
+
+                if (!rawText) return;
+
+                const newWords = rawText.split(',')
+                    .map(w => w.trim())
+                    .filter(w => w.length > 0);
+
+                if (newWords.length === 0) return;
+
+                const payloadItems = newWords.map(w => ({ word: w, case_mode: defaultCaseMode }));
+
+                try {
+                    const res = await fetch(`${API_BASE}/rules/section-words`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            words: payloadItems,
+                            default_case_mode: defaultCaseMode
+                        })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.items) {
+                            currentItems = data.items;
+                        }
+                        showToast(`Successfully added ${newWords.length} term(s)!`);
+                    } else {
+                        addWordsLocally(payloadItems);
+                    }
+                } catch (err) {
+                    console.warn("API unavailable, updating locally:", err);
+                    addWordsLocally(payloadItems);
+                }
+
+                input.value = '';
+                renderWords();
+            }
+
+            function addWordsLocally(payloadItems) {
+                payloadItems.forEach(it => {
+                    const existing = currentItems.find(ex => ex.word.toLowerCase() === it.word.toLowerCase());
+                    if (!existing) {
+                        currentItems.push({ word: it.word, case_mode: it.case_mode });
+                    } else {
+                        existing.case_mode = it.case_mode;
+                    }
+                });
+                showToast(`Added ${payloadItems.length} term(s) locally.`);
+            }
+
+            async function removeWord(word) {
+                try {
+                    const res = await fetch(`${API_BASE}/rules/section-words/${encodeURIComponent(word)}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.items) {
+                            currentItems = data.items;
+                        }
+                        showToast(`Removed "${word}"`);
+                    } else {
+                        currentItems = currentItems.filter(it => it.word.toLowerCase() !== word.toLowerCase());
+                        showToast(`Removed "${word}" locally`);
+                    }
+                } catch (err) {
+                    currentItems = currentItems.filter(it => it.word.toLowerCase() !== word.toLowerCase());
+                    showToast(`Removed "${word}" locally`);
+                }
+                renderWords();
+            }
+
+            function showToast(msg) {
+                const toast = document.getElementById('toast');
+                toast.textContent = msg;
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
+            }
+
+            function escapeHtml(str) {
+                return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            }
+
+            function downloadFormattingRulesJson() {
+                const formatted = currentItems.map(it => formatItemRegex(it));
+                const pattern = `\\b(${formatted.join('|')})s?\\b`;
+                const fullRules = {
+                    "double_spaces": {
+                        "pattern": "  +",
+                        "message": "Double Spaces",
+                        "target": "both"
+                    },
+                    "serial_commas": {
+                        "pattern": "\\b[^,.]+,\\s+[^,.]+,\\s+(?:and|or)\\s+[^,.]+\\b",
+                        "message": "Serial Commas",
+                        "target": "body"
+                    },
+                    "section_words": {
+                        "pattern": pattern,
+                        "message": "Prohibited section terms",
+                        "target": "both"
+                    },
+                    "space_period_para": {
+                        "pattern": "\\. +$",
+                        "message": "Space between period and paragraph mark",
+                        "target": "body"
+                    },
+                    "double_punctuation": {
+                        "pattern": ",{2,}|::+|;;+|(?<!\\.)\\.\\.(?!\\.)",
+                        "message": "Double punctuation detected",
+                        "target": "both"
+                    },
+                    "space_before_endnote": {
+                        "pattern": " +\\[\\[\\^e\\]\\]",
+                        "message": "Space before endnote citation",
+                        "target": "body"
+                    },
+                    "no_space_endnote_text": {
+                        "pattern": "\\[\\[\\^e\\]\\][a-zA-Z]",
+                        "message": "No space between endnote and text",
+                        "target": "body"
+                    },
+                    "endnote_colon": {
+                        "pattern": "\\[\\[\\^e\\]\\]:",
+                        "message": "Endnote citation followed by colon",
+                        "target": "body"
+                    },
+                    "endnote_semicolon": {
+                        "pattern": "\\[\\[\\^e\\]\\];",
+                        "message": "Endnote citation followed by semicolon",
+                        "target": "body"
+                    },
+                    "endnote_comma": {
+                        "pattern": "\\[\\[\\^e\\]\\],",
+                        "message": "Endnote citation followed by comma",
+                        "target": "body"
+                    },
+                    "comma_after_quotes_in_endnotes": {
+                        "pattern": "[\"”],",
+                        "message": "Comma placed outside of double quotes in endnotes",
+                        "target": "endnotes"
+                    },
+                    "hyphen_spaced": {
+                        "pattern": " - ",
+                        "message": "Hyphen surrounded by spaces",
+                        "target": "both"
+                    },
+                    "spaced_endash": {
+                        "pattern": "\\s+\\u2013\\s+|\\s+\\u2014\\s+|--",
+                        "message": "Double hyphen or spaced en-dash/em-dash used",
+                        "target": "both"
+                    }
+                };
+
+                const jsonStr = JSON.stringify(fullRules, null, 4);
+                const blob = new Blob([jsonStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "formatting_rules.json";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast("Downloaded formatting_rules.json!");
+            }
+
+            // Initialize on load
+            fetchRules();
+        </script>
+</body>
+
+</html>
